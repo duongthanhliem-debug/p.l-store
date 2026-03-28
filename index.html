@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phúc Tea Finance Hub</title>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root {
+  --gold:#F5A623;--gold-light:#FDF3E3;--gold-mid:#F7C56E;
+  --brown:#3D2B1F;--brown-mid:#6B4226;--brown-light:#9C6B47;
+  --cream:#FAF7F2;--white:#fff;
+  --red:#E53E3E;--red-light:#FFF5F5;
+  --green:#2D8248;--green-light:#F0FFF4;
+  --blue:#2B6CB0;--blue-light:#EBF8FF;
+  --gray:#718096;--gray-light:#F7F8FA;
+  --border:#E8E0D4;
+  --shadow:0 2px 12px rgba(61,43,31,.08);
+  --shadow-md:0 4px 24px rgba(61,43,31,.12);
+  --r:12px;--rs:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Be Vietnam Pro',sans-serif;background:var(--cream);color:var(--brown);min-height:100vh}
+
+/* CONFIG BANNER */
+#config-banner{background:#1a1a2e;color:#fff;padding:12px 20px;font-size:13px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#config-banner.hidden{display:none}
+.config-input{flex:1;min-width:200px;font-family:'Be Vietnam Pro',sans-serif;font-size:13px;padding:7px 12px;border:1.5px solid rgba(255,255,255,0.3);border-radius:6px;background:rgba(255,255,255,0.1);color:#fff}
+.config-input::placeholder{color:rgba(255,255,255,0.5)}
+.config-btn{font-family:'Be Vietnam Pro',sans-serif;font-size:13px;font-weight:600;padding:7px 16px;border-radius:6px;cursor:pointer;border:none}
+.config-btn-save{background:var(--gold);color:var(--brown)}
+.config-status{font-size:12px;padding:4px 10px;border-radius:4px}
+.config-status.ok{background:rgba(45,130,72,.3);color:#6ee7a0}
+.config-status.err{background:rgba(229,62,62,.3);color:#fc8181}
+
+/* NAV */
+.nav{background:var(--brown);padding:0 24px;display:flex;align-items:center;position:sticky;top:0;z-index:100;border-bottom:3px solid var(--gold)}
+.nav-brand{display:flex;align-items:center;gap:10px;padding:14px 0;margin-right:32px}
+.nav-logo{width:36px;height:36px;background:var(--gold);border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-size:18px;color:var(--brown);font-weight:700}
+.nav-title{font-size:14px;font-weight:600;color:#fff;letter-spacing:.02em}
+.nav-title span{color:var(--gold)}
+.nav-tabs{display:flex}
+.nav-tab{padding:18px 18px;font-size:13px;font-weight:500;color:rgba(255,255,255,0.6);cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-3px;transition:all .2s;white-space:nowrap}
+.nav-tab:hover{color:var(--gold-mid)}
+.nav-tab.active{color:var(--gold);border-bottom-color:var(--gold)}
+.nav-right{display:flex;align-items:center;gap:12px;margin-left:auto}
+.nav-badge{background:var(--red);color:#fff;font-size:11px;font-weight:600;padding:2px 7px;border-radius:10px}
+.avatar{width:32px;height:32px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--brown)}
+
+/* PAGES */
+.page{display:none;padding:28px 28px 80px;max-width:1400px;margin:0 auto}
+.page.active{display:block}
+
+/* LOADING */
+.loading-overlay{display:none;position:fixed;inset:0;background:rgba(250,247,242,.85);z-index:500;align-items:center;justify-content:center;flex-direction:column;gap:16px}
+.loading-overlay.show{display:flex}
+.spinner{width:48px;height:48px;border:4px solid var(--border);border-top:4px solid var(--gold);border-radius:50%;animation:spin 0.8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.loading-text{font-size:14px;color:var(--brown-mid);font-weight:500}
+
+/* PAGE HEADER */
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:24px;gap:16px;flex-wrap:wrap}
+.page-title{font-family:'Playfair Display',serif;font-size:26px;color:var(--brown);line-height:1.2}
+.page-subtitle{font-size:13px;color:var(--gray);margin-top:4px}
+
+/* FILTER */
+.filter-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.filter-select{font-family:'Be Vietnam Pro',sans-serif;font-size:13px;font-weight:500;padding:8px 32px 8px 12px;border:1.5px solid var(--border);border-radius:var(--rs);background:var(--white);color:var(--brown);cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L6 7L11 1' stroke='%236B4226' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;transition:border-color .2s}
+.filter-select:focus{outline:none;border-color:var(--gold)}
+
+/* BUTTONS */
+.btn{font-family:'Be Vietnam Pro',sans-serif;font-size:13px;font-weight:600;padding:8px 18px;border-radius:var(--rs);cursor:pointer;border:none;transition:all .2s;display:inline-flex;align-items:center;gap:6px}
+.btn-primary{background:var(--gold);color:var(--brown)}
+.btn-primary:hover{background:var(--gold-mid);transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn-outline{background:var(--white);color:var(--brown-mid);border:1.5px solid var(--border)}
+.btn-outline:hover{border-color:var(--gold);color:var(--gold)}
+.btn-ghost{background:transparent;color:var(--brown-mid);border:1.5px solid transparent}
+.btn-ghost:hover{background:var(--gold-light);color:var(--gold)}
+.btn-danger{background:var(--red);color:#fff}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-bottom:28px}
+.kpi-card{background:var(--white);border-radius:var(--r);padding:20px;border:1.5px solid var(--border);transition:all .2s}
+.kpi-card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.kpi-label{font-size:12px;font-weight:500;color:var(--gray);letter-spacing:.04em;text-transform:uppercase;margin-bottom:8px}
+.kpi-value{font-size:22px;font-weight:700;color:var(--brown);line-height:1;margin-bottom:8px}
+.kpi-change{font-size:12px;font-weight:500}
+.kpi-change.up{color:var(--green)}
+.kpi-change.down{color:var(--red)}
+.kpi-change.neutral{color:var(--gray)}
+
+/* GRID */
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+@media(max-width:900px){.grid-2{grid-template-columns:1fr}}
+
+/* CARD */
+.card{background:var(--white);border-radius:var(--r);border:1.5px solid var(--border);overflow:hidden}
+.card-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.card-title{font-size:14px;font-weight:600;color:var(--brown)}
+.card-body{padding:20px}
+
+/* TABLE */
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{padding:10px 14px;text-align:left;font-size:11px;font-weight:600;color:var(--gray);letter-spacing:.05em;text-transform:uppercase;background:var(--gray-light);border-bottom:1px solid var(--border)}
+.data-table td{padding:12px 14px;border-bottom:1px solid var(--border);color:var(--brown)}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--gold-light)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.badge-green{background:var(--green-light);color:var(--green)}
+.badge-red{background:var(--red-light);color:var(--red)}
+.badge-gold{background:var(--gold-light);color:var(--brown-mid)}
+.badge-blue{background:var(--blue-light);color:var(--blue)}
+.badge-gray{background:var(--gray-light);color:var(--gray)}
+
+/* ALERT */
+.alert{display:flex;align-items:flex-start;gap:12px;padding:14px 16px;border-radius:var(--rs);margin-bottom:12px;font-size:13px}
+.alert-icon{font-size:16px;line-height:1;flex-shrink:0;margin-top:1px}
+.alert-red{background:var(--red-light);border-left:3px solid var(--red);color:var(--red)}
+.alert-gold{background:var(--gold-light);border-left:3px solid var(--gold);color:var(--brown-mid)}
+.alert-green{background:var(--green-light);border-left:3px solid var(--green);color:var(--green)}
+
+/* AI BOX */
+.ai-box{background:linear-gradient(135deg,var(--brown) 0%,var(--brown-mid) 100%);border-radius:var(--r);padding:20px;color:#fff;position:relative;overflow:hidden}
+.ai-box::before{content:'';position:absolute;top:-20px;right:-20px;width:120px;height:120px;background:var(--gold);opacity:.08;border-radius:50%}
+.ai-tag{background:var(--gold);color:var(--brown);font-size:10px;font-weight:700;padding:3px 8px;border-radius:4px;letter-spacing:.06em}
+.ai-title{font-size:13px;font-weight:600;color:var(--gold-mid)}
+.ai-insight{font-size:13px;line-height:1.7;color:rgba(255,255,255,.85);margin-bottom:10px;padding-left:12px;border-left:2px solid var(--gold)}
+.ai-btn{font-family:'Be Vietnam Pro',sans-serif;font-size:12px;font-weight:600;padding:6px 14px;border-radius:var(--rs);cursor:pointer;border:1.5px solid rgba(245,166,35,.5);background:transparent;color:var(--gold-mid);transition:all .2s}
+.ai-btn:hover{background:rgba(245,166,35,.15)}
+
+/* FORM */
+.form-group{margin-bottom:18px}
+.form-label{display:block;font-size:12px;font-weight:600;color:var(--brown-mid);margin-bottom:6px;letter-spacing:.03em;text-transform:uppercase}
+.form-control{width:100%;font-family:'Be Vietnam Pro',sans-serif;font-size:14px;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--rs);background:var(--white);color:var(--brown);transition:border-color .2s}
+.form-control:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(245,166,35,.15)}
+.form-control::placeholder{color:#B0A090}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:600px){.form-row{grid-template-columns:1fr}}
+
+/* P&L */
+.pl-section-header{display:flex;align-items:center;justify-content:space-between;padding:10px 16px;background:var(--brown);color:#fff;font-size:12px;font-weight:700;letter-spacing:.04em;border-radius:var(--rs) var(--rs) 0 0}
+.pl-section-header.sub{background:var(--brown-light)}
+.pl-row{display:flex;align-items:center;justify-content:space-between;padding:9px 16px;border-bottom:1px solid var(--border);font-size:13px}
+.pl-row:last-child{border-bottom:none}
+.pl-row.total{background:var(--gold-light);font-weight:700;font-size:14px;border-top:2px solid var(--gold)}
+.pl-row.sub-total{background:var(--gray-light);font-weight:600}
+.pl-label{color:var(--brown-mid)}
+.pl-value{font-weight:600;color:var(--brown)}
+.pl-value.positive{color:var(--green)}
+.pl-value.negative{color:var(--red)}
+.pl-pct{font-size:11px;color:var(--gray);min-width:50px;text-align:right}
+
+/* CATEGORY GRID */
+.category-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px}
+.category-btn{font-family:'Be Vietnam Pro',sans-serif;font-size:12px;font-weight:500;padding:10px 8px;border:1.5px solid var(--border);border-radius:var(--rs);background:var(--white);color:var(--brown-mid);cursor:pointer;text-align:center;transition:all .15s}
+.category-btn:hover,.category-btn.active{border-color:var(--gold);background:var(--gold-light);color:var(--brown)}
+
+/* INNER TABS */
+.inner-tabs{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:24px}
+.inner-tab{font-size:13px;font-weight:500;padding:10px 18px;cursor:pointer;color:var(--gray);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.inner-tab.active{color:var(--brown);border-bottom-color:var(--gold);font-weight:600}
+
+/* STORE CARDS */
+.store-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:16px;margin-bottom:24px}
+.store-card{background:var(--white);border-radius:var(--r);border:1.5px solid var(--border);padding:18px 20px;transition:all .2s;cursor:pointer;position:relative}
+.store-card:hover{box-shadow:var(--shadow-md);border-color:var(--gold);transform:translateY(-2px)}
+.store-card.alert-border{border-color:var(--red)}
+.store-name{font-size:14px;font-weight:700;color:var(--brown);margin-bottom:4px}
+.store-location{font-size:12px;color:var(--gray);margin-bottom:14px}
+.store-metrics{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:14px}
+.store-metric-label{font-size:10px;font-weight:500;color:var(--gray);text-transform:uppercase;letter-spacing:.04em}
+.store-metric-value{font-size:14px;font-weight:700;color:var(--brown);margin-top:2px}
+.store-alert-dot{position:absolute;top:14px;right:14px;width:10px;height:10px;background:var(--red);border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
+.progress-bar{height:6px;background:var(--border);border-radius:3px;overflow:hidden;margin-top:8px}
+.progress-fill{height:100%;border-radius:3px;background:var(--gold);transition:width .6s ease}
+.progress-fill.green{background:var(--green)}
+.progress-fill.red{background:var(--red)}
+
+/* SUCCESS TOAST */
+.toast{position:fixed;bottom:24px;right:24px;padding:14px 20px;border-radius:var(--r);font-size:13px;font-weight:600;z-index:1000;transform:translateY(80px);opacity:0;transition:all .3s;box-shadow:var(--shadow-md)}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.success{background:var(--green);color:#fff}
+.toast.error{background:var(--red);color:#fff}
+
+/* EMPTY STATE */
+.empty-state{text-align:center;padding:60px 20px;color:var(--gray)}
+.empty-icon{font-size:48px;margin-bottom:12px}
+.empty-title{font-size:16px;font-weight:600;color:var(--brown-mid);margin-bottom:6px}
+
+/* MOBILE */
+@media(max-width:768px){
+  .page{padding:16px 16px 80px}
+  .nav-tabs{display:none}
+  .kpi-grid{grid-template-columns:repeat(2,1fr)}
+}
+.mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--brown);border-top:3px solid var(--gold);padding:8px 0 12px;z-index:200}
+@media(max-width:768px){.mobile-nav{display:flex;justify-content:space-around}}
+.mobile-nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;font-weight:500;color:rgba(255,255,255,.5);cursor:pointer;padding:4px 0}
+.mobile-nav-btn.active{color:var(--gold)}
+.mobile-nav-icon{font-size:20px}
+</style>
+</head>
+<body>
+
+<!-- CONFIG BANNER -->
+<div id="config-banner">
+  <span style="font-weight:600;white-space:nowrap">⚙️ Cài đặt API:</span>
+  <input id="api-url-input" class="config-input" placeholder="Dán URL Google Apps Script vào đây (https://script.google.com/macros/s/...)" />
+  <button class="config-btn config-btn-save" onclick="saveConfig()">Lưu & Kết nối</button>
+  <span id="config-status" class="config-status" style="display:none"></span>
+  <button class="config-btn" style="background:rgba(255,255,255,.1);color:#fff;border:1px solid rgba(255,255,255,.3)" onclick="document.getElementById('config-banner').classList.add('hidden')">Ẩn</button>
+</div>
+
+<!-- LOADING -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Đang tải dữ liệu...</div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-logo">P</div>
+    <div><div class="nav-title"><span>Phúc Tea</span> Finance Hub</div></div>
+  </div>
+  <div class="nav-tabs">
+    <div class="nav-tab active" onclick="showPage('dashboard')">📊 Dashboard</div>
+    <div class="nav-tab" onclick="showPage('stores')">🏪 Cửa hàng</div>
+    <div class="nav-tab" onclick="showPage('pl')">📋 P&L</div>
+    <div class="nav-tab" onclick="showPage('input')">✏️ Nhập liệu</div>
+    <div class="nav-tab" onclick="showPage('email')">📧 Email</div>
+  </div>
+  <div class="nav-right">
+    <span class="nav-badge" id="alert-badge" style="display:none">0</span>
+    <div class="avatar">TL</div>
+  </div>
+</nav>
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav">
+  <div class="mobile-nav-btn active" onclick="showPage('dashboard')"><span class="mobile-nav-icon">📊</span>Dashboard</div>
+  <div class="mobile-nav-btn" onclick="showPage('stores')"><span class="mobile-nav-icon">🏪</span>Chuỗi</div>
+  <div class="mobile-nav-btn" onclick="showPage('pl')"><span class="mobile-nav-icon">📋</span>P&L</div>
+  <div class="mobile-nav-btn" onclick="showPage('input')"><span class="mobile-nav-icon">✏️</span>Nhập</div>
+  <div class="mobile-nav-btn" onclick="showPage('email')"><span class="mobile-nav-icon">📧</span>Email</div>
+</div>
+
+<!-- ========= DASHBOARD ========= -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Tổng quan chuỗi</div>
+      <div class="page-subtitle" id="dash-subtitle">Đang tải...</div>
+    </div>
+    <div class="filter-bar">
+      <select class="filter-select" id="dash-month" onchange="loadDashboard()">
+        <option value="">Tất cả tháng</option>
+        <option value="1">Tháng 1</option><option value="2" selected>Tháng 2</option>
+        <option value="3">Tháng 3</option><option value="4">Tháng 4</option>
+        <option value="5">Tháng 5</option><option value="6">Tháng 6</option>
+        <option value="7">Tháng 7</option><option value="8">Tháng 8</option>
+        <option value="9">Tháng 9</option><option value="10">Tháng 10</option>
+        <option value="11">Tháng 11</option><option value="12">Tháng 12</option>
+      </select>
+      <select class="filter-select" id="dash-year" onchange="loadDashboard()">
+        <option value="2026" selected>2026</option>
+        <option value="2025">2025</option>
+      </select>
+      <button class="btn btn-primary" onclick="showPage('email')">📧 Gửi báo cáo tháng</button>
+    </div>
+  </div>
+  <div id="dash-alerts"></div>
+  <div class="kpi-grid" id="dash-kpis">
+    <div class="kpi-card"><div class="kpi-label">Tổng doanh thu</div><div class="kpi-value">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Lợi nhuận ròng</div><div class="kpi-value">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Tỷ suất LN</div><div class="kpi-value">—</div></div>
+    <div class="kpi-card"><div class="kpi-label">Cửa hàng lỗ</div><div class="kpi-value">—</div></div>
+  </div>
+  <div class="card" style="margin-bottom:24px">
+    <div class="card-header">
+      <div class="card-title">Hiệu quả từng cửa hàng</div>
+      <button class="btn btn-outline" style="font-size:12px;padding:5px 12px" onclick="loadDashboard()">🔄 Làm mới</button>
+    </div>
+    <div style="overflow-x:auto">
+      <table class="data-table">
+        <thead><tr>
+          <th>Cửa hàng</th><th>Khu vực</th><th>Doanh thu</th>
+          <th>CP Vốn</th><th>CP Vận hành</th><th>Lợi nhuận</th>
+          <th>Tỷ suất</th><th>Tình trạng</th><th></th>
+        </tr></thead>
+        <tbody id="dash-table-body">
+          <tr><td colspan="9" style="text-align:center;padding:30px;color:var(--gray)">Đang tải...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div class="ai-box" id="dash-ai" style="display:none">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <span class="ai-tag">AI PHÂN TÍCH</span>
+      <span class="ai-title">Nhận định tháng này</span>
+    </div>
+    <div id="dash-ai-content"></div>
+  </div>
+</div>
+
+<!-- ========= STORES ========= -->
+<div class="page" id="page-stores">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Quản lý chuỗi cửa hàng</div>
+      <div class="page-subtitle" id="stores-subtitle">Đang tải...</div>
+    </div>
+    <div class="filter-bar">
+      <button class="btn btn-outline" onclick="loadDashboard();showPage('stores')">🔄 Làm mới</button>
+    </div>
+  </div>
+  <div class="store-grid" id="store-grid">
+    <div style="color:var(--gray);padding:20px">Đang tải...</div>
+  </div>
+</div>
+
+<!-- ========= P&L ========= -->
+<div class="page" id="page-pl">
+  <div class="page-header">
+    <div>
+      <div class="page-title">P&L Chi tiết</div>
+      <div class="page-subtitle">Báo cáo lãi – lỗ theo chuẩn Phúc Tea</div>
+    </div>
+    <div class="filter-bar">
+      <select class="filter-select" id="pl-store">
+        <option value="CENTER001">CENTER001</option>
+        <option value="CENTER002">CENTER002</option>
+        <option value="CENTER003">CENTER003</option>
+      </select>
+      <select class="filter-select" id="pl-month" onchange="loadPL()">
+        <option value="">Cả năm</option>
+        <option value="1">T1</option><option value="2" selected>T2</option>
+        <option value="3">T3</option><option value="4">T4</option>
+        <option value="5">T5</option><option value="6">T6</option>
+        <option value="7">T7</option><option value="8">T8</option>
+        <option value="9">T9</option><option value="10">T10</option>
+        <option value="11">T11</option><option value="12">T12</option>
+      </select>
+      <select class="filter-select" id="pl-year" onchange="loadPL()">
+        <option value="2026">2026</option><option value="2025">2025</option>
+      </select>
+      <button class="btn btn-primary" onclick="loadPL()">🔄 Tải P&L</button>
+      <button class="btn btn-outline" onclick="exportPLEmail()">📧 Gửi báo cáo</button>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div id="pl-table-wrap">
+      <div style="text-align:center;padding:40px;color:var(--gray)">Chọn cửa hàng và bấm "Tải P&L"</div>
+    </div>
+    <div>
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><div class="card-title">Tóm tắt P&L</div></div>
+        <div class="card-body" id="pl-summary">
+          <div style="color:var(--gray);font-size:13px">Chưa có dữ liệu</div>
+        </div>
+      </div>
+      <div class="ai-box" id="pl-ai" style="display:none">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+          <span class="ai-tag">AI ĐÁNH GIÁ</span>
+          <span class="ai-title" id="pl-ai-title"></span>
+        </div>
+        <div id="pl-ai-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ========= NHẬP LIỆU ========= -->
+<div class="page" id="page-input">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Nhập liệu thu – chi</div>
+      <div class="page-subtitle">Tối giản thao tác · Lưu thẳng vào Google Sheets</div>
+    </div>
+  </div>
+  <div style="max-width:600px;margin:0 auto">
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header" style="background:var(--brown);color:#fff;border-radius:var(--r) var(--r) 0 0">
+        <div class="card-title" style="color:#fff">1 — Thông tin cơ bản</div>
+      </div>
+      <div class="card-body">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Cửa hàng</label>
+            <select class="form-control" id="tx-store">
+              <option value="CENTER001">CENTER001 – Cần Thơ</option>
+              <option value="CENTER002">CENTER002 – Cần Thơ</option>
+              <option value="CENTER003">CENTER003 – Vĩnh Long</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Ngày</label>
+            <input type="date" class="form-control" id="tx-date">
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Loại giao dịch</label>
+          <div style="display:flex;gap:10px">
+            <label id="type-thu" style="flex:1;display:flex;align-items:center;gap:8px;padding:12px;border:1.5px solid var(--gold);background:var(--gold-light);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:600" onclick="setType('thu')">
+              💰 Thu tiền
+            </label>
+            <label id="type-chi" style="flex:1;display:flex;align-items:center;gap:8px;padding:12px;border:1.5px solid var(--border);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:500" onclick="setType('chi')">
+              💸 Chi tiền
+            </label>
+          </div>
+          <input type="hidden" id="tx-type" value="thu">
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px" id="category-card">
+      <div class="card-header" style="background:var(--brown-light);color:#fff">
+        <div class="card-title" style="color:#fff">2 — Danh mục</div>
+      </div>
+      <div class="card-body">
+        <div class="category-grid" id="category-grid"></div>
+        <input type="hidden" id="tx-category">
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-header" style="background:var(--brown-light);color:#fff">
+        <div class="card-title" style="color:#fff">3 — Số tiền & ghi chú</div>
+      </div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Số tiền (VNĐ)</label>
+          <input type="number" class="form-control" id="tx-amount" placeholder="Nhập số tiền..." style="font-size:20px;font-weight:700">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Ghi chú</label>
+          <input type="text" class="form-control" id="tx-note" placeholder="Vd: Mua trân châu đen Kun Han 3kg">
+        </div>
+        <button class="btn btn-primary" style="width:100%;padding:14px;font-size:15px" onclick="submitTransaction()">✓ Lưu giao dịch</button>
+      </div>
+    </div>
+
+    <div class="card" id="recent-card">
+      <div class="card-header"><div class="card-title">Giao dịch gần đây</div></div>
+      <table class="data-table">
+        <thead><tr><th>Ngày</th><th>Danh mục</th><th>Số tiền</th></tr></thead>
+        <tbody id="recent-body">
+          <tr><td colspan="3" style="text-align:center;padding:20px;color:var(--gray)">Chưa có giao dịch</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ========= EMAIL ========= -->
+<div class="page" id="page-email">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Gửi báo cáo Email</div>
+      <div class="page-subtitle">Auto draft · Admin duyệt · Gửi thật qua Gmail</div>
+    </div>
+  </div>
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-header"><div class="card-title">Gửi báo cáo cho cửa hàng</div></div>
+      <div class="card-body">
+        <div class="form-group">
+          <label class="form-label">Cửa hàng</label>
+          <select class="form-control" id="email-store">
+            <option value="CENTER001">CENTER001 – Cần Thơ</option>
+            <option value="CENTER002">CENTER002 – Cần Thơ</option>
+            <option value="CENTER003">CENTER003 – Vĩnh Long</option>
+          </select>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Tháng</label>
+            <select class="form-control" id="email-month">
+              <option value="1">Tháng 1</option><option value="2" selected>Tháng 2</option>
+              <option value="3">Tháng 3</option><option value="4">Tháng 4</option>
+              <option value="5">Tháng 5</option><option value="6">Tháng 6</option>
+              <option value="7">Tháng 7</option><option value="8">Tháng 8</option>
+              <option value="9">Tháng 9</option><option value="10">Tháng 10</option>
+              <option value="11">Tháng 11</option><option value="12">Tháng 12</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Năm</label>
+            <select class="form-control" id="email-year">
+              <option value="2026">2026</option><option value="2025">2025</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Email người nhận</label>
+          <input type="email" class="form-control" id="email-to" placeholder="email@example.com">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Tên cửa hàng (hiển thị trong email)</label>
+          <input type="text" class="form-control" id="email-storename" placeholder="CENTER001 – Cần Thơ">
+        </div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline" style="flex:1" onclick="previewEmail()">👁 Xem trước</button>
+          <button class="btn btn-primary" style="flex:1" onclick="sendEmail()">📧 Gửi email thật</button>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font-size:13px;color:var(--gray);margin-bottom:10px;font-weight:500">Xem trước email</div>
+      <div id="email-preview-wrap" style="background:#f0f0f0;border-radius:var(--r);padding:16px;min-height:200px;display:flex;align-items:center;justify-content:center">
+        <div style="text-align:center;color:var(--gray)">
+          <div style="font-size:32px;margin-bottom:8px">📧</div>
+          <div>Điền thông tin và bấm "Xem trước"</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CONFIG & API
+// ============================================================
+let API_URL = localStorage.getItem('phuctea_api_url') || '';
+let currentTxType = 'thu';
+let recentTx = [];
+let dashboardData = null;
+let chartRevenue = null;
+
+// Categories
+const CATEGORIES = {
+  thu: ['GrabFood','ShopeeFood','Mang về','Tại chỗ','Giao hàng','Doanh thu vật phẩm','Thu khác'],
+  chi: [
+    'Chi phí nguyên vật liệu hệ thống','Chi phí nguyên vật liệu địa phương',
+    'Chi phí vận chuyển','Chiết khấu các foodapps',
+    'Thanh toán tiền lương nhân viên pha chế, phục vụ','Thanh toán tiền lương quản lý',
+    'Chi phí mặt bằng','Thanh toán tiền điện','Thanh toán tiền nước',
+    'Thanh toán tiền internet','Thanh toán tiền gas',
+    'Royalty Fee','Chi tiền quảng cáo, marketing','Chi phí sửa chữa',
+    'Chi tiền nộp thuế','Hao phí','Nước đá','Chi phí khác'
+  ]
+};
+
+// ---- Init ----
+window.onload = function() {
+  const today = new Date();
+  document.getElementById('tx-date').value = today.toISOString().split('T')[0];
+  buildCategoryGrid('thu');
+
+  if (API_URL) {
+    document.getElementById('api-url-input').value = API_URL;
+    document.getElementById('config-banner').classList.add('hidden');
+    loadDashboard();
+  }
+
+  // Load store select for P&L
+  document.getElementById('pl-store').addEventListener('change', loadPL);
+};
+
+function saveConfig() {
+  const url = document.getElementById('api-url-input').value.trim();
+  if (!url.startsWith('https://script.google.com')) {
+    showStatus('err','URL không hợp lệ'); return;
+  }
+  API_URL = url;
+  localStorage.setItem('phuctea_api_url', url);
+  showStatus('ok','Đang kết nối...');
+  testConnection();
+}
+
+async function testConnection() {
+  try {
+    const data = await apiGet({ action:'getDashboard', month:'2', year:'2026' });
+    if (data.error) { showStatus('err','Lỗi: '+data.error); return; }
+    showStatus('ok','✓ Kết nối thành công!');
+    setTimeout(()=>document.getElementById('config-banner').classList.add('hidden'), 1500);
+    loadDashboard();
+  } catch(e) {
+    showStatus('err','Không kết nối được. Kiểm tra lại URL.');
+  }
+}
+
+function showStatus(type, msg) {
+  const el = document.getElementById('config-status');
+  el.style.display = 'inline-block';
+  el.className = 'config-status '+type;
+  el.textContent = msg;
+}
+
+// ============================================================
+// API CALLS
+// ============================================================
+async function apiGet(params) {
+  if (!API_URL) { showToast('Chưa cài đặt API URL!','error'); throw new Error('No API'); }
+  const qs = Object.entries(params).map(([k,v])=>k+'='+encodeURIComponent(v)).join('&');
+  const res = await fetch(API_URL + '?' + qs);
+  return res.json();
+}
+
+async function apiPost(body) {
+  if (!API_URL) { showToast('Chưa cài đặt API URL!','error'); throw new Error('No API'); }
+  const res = await fetch(API_URL, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  return res.json();
+}
+
+// ============================================================
+// DASHBOARD
+// ============================================================
+async function loadDashboard() {
+  const month = document.getElementById('dash-month').value;
+  const year  = document.getElementById('dash-year').value;
+
+  showLoading('Đang tải dữ liệu dashboard...');
+  try {
+    const data = await apiGet({ action:'getDashboard', month, year });
+    dashboardData = data;
+    renderDashboard(data);
+    renderStores(data);
+  } catch(e) {
+    showToast('Lỗi tải dashboard: '+e.message,'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+function renderDashboard(data) {
+  const s = data.summary;
+  const month = document.getElementById('dash-month').value;
+  const year  = document.getElementById('dash-year').value;
+
+  document.getElementById('dash-subtitle').textContent =
+    (month?'Tháng '+month+'/':'Cả năm ') + year + ' · ' + s.storeCount + ' cửa hàng';
+
+  // Alerts
+  const alertDiv = document.getElementById('dash-alerts');
+  alertDiv.innerHTML = '';
+  if (data.alerts && data.alerts.length) {
+    document.getElementById('alert-badge').style.display = 'inline';
+    document.getElementById('alert-badge').textContent = data.alerts.length;
+    data.alerts.forEach(a => {
+      alertDiv.innerHTML += `<div class="alert alert-${a.level==='red'?'red':'gold'}">
+        <div class="alert-icon">${a.level==='red'?'🔴':'⚠️'}</div><div>${a.msg}</div></div>`;
+    });
+  }
+
+  // KPIs
+  document.getElementById('dash-kpis').innerHTML = `
+    <div class="kpi-card">
+      <div class="kpi-label">Tổng doanh thu</div>
+      <div class="kpi-value">${fmtM(s.totalRevenue)}</div>
+      <div class="kpi-change neutral">${s.storeCount} cửa hàng</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Lợi nhuận ròng</div>
+      <div class="kpi-value" style="color:${s.totalProfit>=0?'var(--green)':'var(--red)'}">${fmtM(s.totalProfit)}</div>
+      <div class="kpi-change ${s.totalProfit>=0?'up':'down'}">${s.totalProfit>=0?'Đang lãi':'Đang lỗ'}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Tỷ suất LN chuỗi</div>
+      <div class="kpi-value">${s.totalMargin}%</div>
+      <div class="kpi-change neutral">Mục tiêu: 20%</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-label">Cửa hàng lỗ</div>
+      <div class="kpi-value" style="color:${s.lossCount>0?'var(--red)':'var(--green)'}">${s.lossCount} / ${s.storeCount}</div>
+      <div class="kpi-change ${s.lossCount>0?'down':'up'}">${s.lossCount>0?'Cần can thiệp':'Tất cả có lãi'}</div>
+    </div>
+  `;
+
+  // Table
+  const tbody = document.getElementById('dash-table-body');
+  if (!data.stores || !data.stores.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:30px;color:var(--gray)">Không có dữ liệu</td></tr>';
+    return;
+  }
+  tbody.innerHTML = data.stores.map(store => {
+    const badge = store.profit < 0
+      ? '<span class="badge badge-red">⚠ Lỗ</span>'
+      : store.margin >= 20
+        ? '<span class="badge badge-green">✓ Tốt</span>'
+        : '<span class="badge badge-gold">→ Trung bình</span>';
+    return `<tr>
+      <td><strong>${store.id}</strong></td>
+      <td>${store.area||''}</td>
+      <td>${fmtM(store.revenue)}</td>
+      <td>${fmtM(store.costOfGoods)} (${store.cogsPct}%)</td>
+      <td>${fmtM(store.opex)}</td>
+      <td class="${store.profit>=0?'':'pl-value negative'}">${store.profit>=0?'+':''}${fmtM(store.profit)}</td>
+      <td><strong style="color:${store.margin>=20?'var(--green)':store.margin>=0?'var(--brown-light)':'var(--red)'}">${store.margin}%</strong></td>
+      <td>${badge}</td>
+      <td><button class="btn btn-ghost" style="font-size:12px;padding:4px 10px" onclick="goToPL('${store.id}')">Chi tiết →</button></td>
+    </tr>`;
+  }).join('');
+
+  // AI Insights
+  genDashboardAI(data);
+}
+
+function genDashboardAI(data) {
+  const s = data.summary;
+  const aiDiv = document.getElementById('dash-ai');
+  const aiContent = document.getElementById('dash-ai-content');
+  aiDiv.style.display = 'block';
+
+  const lossStores = data.stores.filter(s=>s.profit<0);
+  const bestStore  = data.stores.reduce((a,b)=>a.margin>b.margin?a:b, data.stores[0]||{});
+  const highNVL    = data.stores.filter(s=>s.cogsPct>35);
+
+  let insights = '';
+  if (s.totalMargin >= 20) {
+    insights += `<div class="ai-insight"><strong style="color:var(--gold)">Chuỗi hoạt động tốt:</strong> Tỷ suất ${s.totalMargin}% đạt mục tiêu 20%. Tiếp tục duy trì và nhân rộng mô hình của ${bestStore.name||bestStore.id}.</div>`;
+  } else {
+    insights += `<div class="ai-insight"><strong style="color:var(--gold)">Cần cải thiện:</strong> Tỷ suất ${s.totalMargin}% chưa đạt mục tiêu 20%. Tổng lợi nhuận: ${fmtM(s.totalProfit)}.</div>`;
+  }
+  if (lossStores.length) {
+    lossStores.forEach(st=>{
+      insights += `<div class="ai-insight"><strong style="color:var(--red)">🔴 ${st.id} đang lỗ ${fmtM(Math.abs(st.profit))}:</strong> Chi phí NVL ${st.cogsPct}%, vận hành cao. Cần kiểm tra ngay quy trình pha chế và ca nhân sự.</div>`;
+    });
+  }
+  if (highNVL.length) {
+    insights += `<div class="ai-insight"><strong style="color:var(--gold)">⚠️ Chi phí NVL cao:</strong> ${highNVL.map(s=>s.id).join(', ')} — NVL vượt 35%. Kiểm tra hao phí và định mức nguyên liệu.</div>`;
+  }
+  if (bestStore && bestStore.margin > 0) {
+    insights += `<div class="ai-insight"><strong style="color:var(--gold)">🏆 Top hiệu quả:</strong> ${bestStore.id} đạt tỷ suất ${bestStore.margin}% — học hỏi mô hình vận hành để áp dụng cho chuỗi.</div>`;
+  }
+  aiContent.innerHTML = insights||'<div class="ai-insight">Không đủ dữ liệu để phân tích. Hãy nhập dữ liệu thu-chi cho các cửa hàng.</div>';
+}
+
+// ============================================================
+// STORES
+// ============================================================
+function renderStores(data) {
+  if (!data || !data.stores) return;
+  document.getElementById('stores-subtitle').textContent = data.stores.length + ' cửa hàng';
+  const grid = document.getElementById('store-grid');
+  grid.innerHTML = data.stores.map(store => {
+    const isLoss = store.profit < 0;
+    const barPct = Math.min(100, Math.max(0, store.margin * 3));
+    return `<div class="store-card ${isLoss?'alert-border':''}" onclick="goToPL('${store.id}')">
+      ${isLoss?'<div class="store-alert-dot"></div>':''}
+      <div class="store-name">${store.name||store.id}</div>
+      <div class="store-location">📍 ${store.area||''}</div>
+      <span class="badge ${isLoss?'badge-red':store.margin>=20?'badge-green':'badge-gold'}">
+        ${isLoss?'⚠ Đang lỗ':store.margin>=20?'✓ Hoạt động tốt':'→ Trung bình'}
+      </span>
+      <div class="store-metrics">
+        <div><div class="store-metric-label">Doanh thu</div><div class="store-metric-value" style="font-size:12px">${fmtM(store.revenue)}</div></div>
+        <div><div class="store-metric-label">Lợi nhuận</div><div class="store-metric-value" style="color:${isLoss?'var(--red)':'var(--green)'};">${isLoss?'':'+'}${fmtM(store.profit)}</div></div>
+        <div><div class="store-metric-label">Tỷ suất</div><div class="store-metric-value" style="color:${isLoss?'var(--red)':store.margin>=20?'var(--green)':'var(--brown-light)'}">${store.margin}%</div></div>
+      </div>
+      <div class="progress-bar"><div class="progress-fill ${isLoss?'red':store.margin>=20?'green':''}" style="width:${barPct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// P&L
+// ============================================================
+async function loadPL() {
+  const storeId = document.getElementById('pl-store').value;
+  const month   = document.getElementById('pl-month').value;
+  const year    = document.getElementById('pl-year').value;
+
+  showLoading('Đang tải P&L...');
+  try {
+    const data = await apiGet({ action:'getPL', storeId, month, year });
+    renderPL(data, storeId, month, year);
+  } catch(e) {
+    showToast('Lỗi tải P&L: '+e.message,'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+function renderPL(data, storeId, month, year) {
+  const t = data.totals;
+  const pl = data.pl;
+
+  // Table
+  let html = '';
+  // Revenue
+  html += `<div style="margin-bottom:4px">
+    <div class="pl-section-header">A — DOANH THU <span>${fmtVND(t.totalRevenue)}</span></div>
+    <div style="background:var(--white);border:1.5px solid var(--border);border-top:none;border-radius:0 0 var(--rs) var(--rs)">`;
+  Object.entries(pl.revenue.items).forEach(([k,v]) => {
+    if (v>0) html += `<div class="pl-row"><span class="pl-label">${k}</span>
+      <div style="display:flex;gap:16px;align-items:center">
+        <span class="pl-pct">${t.totalRevenue>0?Math.round(v/t.totalRevenue*100):0}%</span>
+        <span class="pl-value">${fmtVND(v)}</span>
+      </div></div>`;
+  });
+  html += `<div class="pl-row sub-total"><span class="pl-label">Tổng doanh thu</span>
+    <div style="display:flex;gap:16px"><span class="pl-pct">100%</span><span class="pl-value">${fmtVND(t.totalRevenue)}</span></div></div></div></div>`;
+
+  // COGS
+  html += `<div style="margin-bottom:4px;margin-top:8px">
+    <div class="pl-section-header sub">B — CHI PHÍ VỐN BÁN HÀNG <span>${fmtVND(t.totalCOGS)}</span></div>
+    <div style="background:var(--white);border:1.5px solid var(--border);border-top:none;border-radius:0 0 var(--rs) var(--rs)">`;
+  Object.entries(pl.cogs.items).forEach(([k,v]) => {
+    if (v>0) html += `<div class="pl-row"><span class="pl-label">${k}</span>
+      <div style="display:flex;gap:16px"><span class="pl-pct">${t.totalRevenue>0?Math.round(v/t.totalRevenue*100):0}%</span>
+      <span class="pl-value">${fmtVND(v)}</span></div></div>`;
+  });
+  html += `<div class="pl-row sub-total"><span>Tổng CPVBH</span>
+    <div style="display:flex;gap:16px"><span class="pl-pct">${t.totalRevenue>0?Math.round(t.totalCOGS/t.totalRevenue*100):0}%</span>
+    <span class="pl-value negative">${fmtVND(t.totalCOGS)}</span></div></div></div></div>`;
+
+  // Gross profit
+  html += `<div style="background:var(--gold-light);border:1.5px solid var(--gold);border-radius:var(--rs);margin:10px 0;padding:14px 16px;display:flex;justify-content:space-between;font-weight:700">
+    <span>(1) LỢI NHUẬN GỘP</span>
+    <span style="color:${t.grossProfit>=0?'var(--green)':'var(--red)'}">${fmtVND(t.grossProfit)} (${t.grossMargin}%)</span></div>`;
+
+  // OPEX
+  html += `<div style="margin-bottom:4px">
+    <div class="pl-section-header sub">2 — CHI PHÍ VẬN HÀNH <span>${fmtVND(t.totalOpex)}</span></div>
+    <div style="background:var(--white);border:1.5px solid var(--border);border-top:none;border-radius:0 0 var(--rs) var(--rs)">`;
+  Object.entries(pl.opex.items).forEach(([k,v]) => {
+    if (v>0) html += `<div class="pl-row"><span class="pl-label">${k}</span>
+      <div style="display:flex;gap:16px"><span class="pl-pct">${t.totalRevenue>0?Math.round(v/t.totalRevenue*100):0}%</span>
+      <span class="pl-value">${fmtVND(v)}</span></div></div>`;
+  });
+  html += `<div class="pl-row sub-total"><span>Tổng CPVH</span>
+    <div style="display:flex;gap:16px"><span class="pl-pct">${t.totalRevenue>0?Math.round(t.totalOpex/t.totalRevenue*100):0}%</span>
+    <span class="pl-value negative">${fmtVND(t.totalOpex)}</span></div></div></div></div>`;
+
+  // Net profit
+  html += `<div style="background:var(--brown);border-radius:var(--rs);margin:10px 0;padding:16px;display:flex;justify-content:space-between;font-weight:700;color:#fff">
+    <span>LỢI NHUẬN RÒNG</span>
+    <span style="color:var(--gold);font-size:18px">${t.netProfit>=0?'+':''}${fmtVND(t.netProfit)} <small style="font-size:12px;font-weight:400">(${t.netMargin}%)</small></span></div>`;
+
+  document.getElementById('pl-table-wrap').innerHTML = html;
+
+  // Summary
+  document.getElementById('pl-summary').innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:var(--gray-light);border-radius:var(--rs);padding:12px">
+        <div style="font-size:11px;color:var(--gray);margin-bottom:4px">Doanh thu</div>
+        <div style="font-size:18px;font-weight:700;color:var(--green)">${fmtM(t.totalRevenue)}</div>
+      </div>
+      <div style="background:${t.netProfit>=0?'var(--green-light)':'var(--red-light)'};border-radius:var(--rs);padding:12px">
+        <div style="font-size:11px;color:var(--gray);margin-bottom:4px">Lợi nhuận ròng</div>
+        <div style="font-size:18px;font-weight:700;color:${t.netProfit>=0?'var(--green)':'var(--red)'}">${t.netProfit>=0?'+':''}${fmtM(t.netProfit)}</div>
+      </div>
+      <div style="background:var(--gold-light);border-radius:var(--rs);padding:12px">
+        <div style="font-size:11px;color:var(--gray);margin-bottom:4px">Tỷ suất</div>
+        <div style="font-size:18px;font-weight:700;color:var(--brown)">${t.netMargin}%</div>
+      </div>
+      <div style="background:var(--gray-light);border-radius:var(--rs);padding:12px">
+        <div style="font-size:11px;color:var(--gray);margin-bottom:4px">Lợi nhuận gộp</div>
+        <div style="font-size:18px;font-weight:700;color:var(--brown)">${t.grossMargin}%</div>
+      </div>
+    </div>`;
+
+  // AI
+  const aiDiv = document.getElementById('pl-ai');
+  aiDiv.style.display='block';
+  document.getElementById('pl-ai-title').textContent = storeId + (month?' – T'+month:'') + '/'+year;
+  let aiHtml = '';
+  if (!t.totalRevenue) {
+    aiHtml = '<div class="ai-insight">Chưa có dữ liệu cho kỳ này. Hãy nhập giao dịch thu-chi.</div>';
+  } else if (t.netMargin >= 25) {
+    aiHtml = `<div class="ai-insight"><strong style="color:var(--gold)">Xuất sắc!</strong> Tỷ suất ${t.netMargin}% — tốt nhất chuỗi. Chi phí NVL ${t.totalRevenue>0?Math.round(t.totalCOGS/t.totalRevenue*100):0}% được kiểm soát tốt.</div>`;
+  } else if (t.netMargin >= 15) {
+    aiHtml = `<div class="ai-insight"><strong style="color:var(--gold)">Ổn định:</strong> Tỷ suất ${t.netMargin}%. Có thể cải thiện bằng cách tối ưu chi phí vận hành và tăng doanh thu giờ thấp điểm.</div>`;
+  } else if (t.netMargin >= 0) {
+    aiHtml = `<div class="ai-insight"><strong style="color:var(--gold)">Cần chú ý:</strong> Tỷ suất ${t.netMargin}% thấp. Ưu tiên kiểm soát NVL và tối ưu ca nhân sự.</div>`;
+  } else {
+    aiHtml = `<div class="ai-insight"><strong style="color:var(--red)">Cảnh báo:</strong> Cửa hàng đang lỗ ${fmtM(Math.abs(t.netProfit))}. Cần can thiệp ngay: kiểm tra chi phí NVL ${t.totalRevenue>0?Math.round(t.totalCOGS/t.totalRevenue*100):0}% và tìm cách tăng doanh thu.</div>`;
+  }
+  document.getElementById('pl-ai-content').innerHTML = aiHtml;
+}
+
+function goToPL(storeId) {
+  document.getElementById('pl-store').value = storeId;
+  showPage('pl');
+  loadPL();
+}
+
+function exportPLEmail() {
+  const storeId = document.getElementById('pl-store').value;
+  document.getElementById('email-store').value = storeId;
+  document.getElementById('email-storename').value = storeId;
+  showPage('email');
+}
+
+// ============================================================
+// NHẬP LIỆU
+// ============================================================
+function setType(type) {
+  currentTxType = type;
+  document.getElementById('tx-type').value = type;
+  const thu = document.getElementById('type-thu');
+  const chi = document.getElementById('type-chi');
+  if (type==='thu') {
+    thu.style.cssText='flex:1;display:flex;align-items:center;gap:8px;padding:12px;border:1.5px solid var(--gold);background:var(--gold-light);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:600';
+    chi.style.cssText='flex:1;display:flex;align-items:center;gap:8px;padding:12px;border:1.5px solid var(--border);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:500';
+  } else {
+    chi.style.cssText='flex:1;display:flex;align-items:center;gap:8px;padding:12px;border:1.5px solid var(--red);background:var(--red-light);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:600';
+    thu.style.cssText='flex:1;display:flex;align-items:center;gap:8px;padding:12px;border:1.5px solid var(--border);border-radius:var(--rs);cursor:pointer;font-size:13px;font-weight:500';
+  }
+  buildCategoryGrid(type);
+}
+
+function buildCategoryGrid(type) {
+  const grid = document.getElementById('category-grid');
+  document.getElementById('tx-category').value = '';
+  grid.innerHTML = CATEGORIES[type].map(cat =>
+    `<button class="category-btn" onclick="selectCat(this,'${cat}')">${cat}</button>`
+  ).join('');
+}
+
+function selectCat(btn, cat) {
+  document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tx-category').value = cat;
+}
+
+async function submitTransaction() {
+  const storeId  = document.getElementById('tx-store').value;
+  const date     = document.getElementById('tx-date').value;
+  const type     = document.getElementById('tx-type').value;
+  const category = document.getElementById('tx-category').value;
+  const amount   = document.getElementById('tx-amount').value;
+  const note     = document.getElementById('tx-note').value;
+
+  if (!category) { showToast('Vui lòng chọn danh mục!','error'); return; }
+  if (!amount || Number(amount)<=0) { showToast('Vui lòng nhập số tiền!','error'); return; }
+
+  showLoading('Đang lưu giao dịch...');
+  try {
+    const d = date.split('-');
+    const res = await apiPost({
+      action:'addTransaction',
+      storeId, date, month: d[1], year: d[0],
+      type, category, amount: Number(amount), note
+    });
+    if (res.error) throw new Error(res.error);
+
+    showToast('✓ Đã lưu giao dịch '+res.txId,'success');
+    // Add to recent
+    recentTx.unshift({ date, category, amount:Number(amount), type });
+    renderRecentTx();
+    // Reset
+    document.getElementById('tx-amount').value = '';
+    document.getElementById('tx-note').value = '';
+    document.querySelectorAll('.category-btn').forEach(b=>b.classList.remove('active'));
+    document.getElementById('tx-category').value = '';
+  } catch(e) {
+    showToast('Lỗi: '+e.message,'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+function renderRecentTx() {
+  const tbody = document.getElementById('recent-body');
+  if (!recentTx.length) { tbody.innerHTML='<tr><td colspan="3" style="text-align:center;padding:20px;color:var(--gray)">Chưa có giao dịch</td></tr>'; return; }
+  tbody.innerHTML = recentTx.slice(0,8).map(tx=>`<tr>
+    <td>${tx.date}</td>
+    <td>${tx.category}</td>
+    <td class="${tx.type==='thu'?'pl-value positive':'pl-value negative'}">${tx.type==='thu'?'+':'-'}${fmtVND(tx.amount)}</td>
+  </tr>`).join('');
+}
+
+// ============================================================
+// EMAIL
+// ============================================================
+function previewEmail() {
+  const storeId   = document.getElementById('email-store').value;
+  const month     = document.getElementById('email-month').value;
+  const year      = document.getElementById('email-year').value;
+  const storeName = document.getElementById('email-storename').value || storeId;
+
+  document.getElementById('email-preview-wrap').innerHTML = `
+    <div style="background:#fff;border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-md);width:100%;max-width:480px;margin:0 auto">
+      <div style="background:var(--brown);padding:24px;text-align:center;border-bottom:4px solid var(--gold)">
+        <div style="font-size:24px;font-weight:700;color:var(--gold);letter-spacing:2px">PHÚC TEA</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:4px">Báo cáo tài chính tháng ${month}/${year}</div>
+      </div>
+      <div style="padding:20px">
+        <div style="font-size:14px;font-weight:600;color:var(--brown);margin-bottom:8px">Kính gửi ${storeName},</div>
+        <div style="font-size:13px;color:var(--gray);margin-bottom:16px">Phúc Tea gửi báo cáo tài chính tháng ${month}/${year}. Xem đầy đủ trong file đính kèm.</div>
+        <div style="background:var(--gold-light);border-radius:var(--rs);padding:12px;text-align:center;font-size:12px;color:var(--brown-mid)">
+          Nội dung đầy đủ (số liệu thật từ Sheets) sẽ được tổng hợp khi gửi email.
+        </div>
+        <div style="margin-top:16px;background:var(--brown);border-radius:var(--rs);padding:14px">
+          <div style="font-size:10px;font-weight:700;color:var(--gold);letter-spacing:.05em;margin-bottom:6px">💡 NHẬN ĐỊNH TỰ ĐỘNG</div>
+          <div style="font-size:12px;color:rgba(255,255,255,.8)">AI sẽ tự động phân tích số liệu và đưa ra nhận định khi gửi email thật.</div>
+        </div>
+      </div>
+    </div>`;
+}
+
+async function sendEmail() {
+  const storeId   = document.getElementById('email-store').value;
+  const month     = document.getElementById('email-month').value;
+  const year      = document.getElementById('email-year').value;
+  const toEmail   = document.getElementById('email-to').value;
+  const storeName = document.getElementById('email-storename').value || storeId;
+
+  if (!toEmail) { showToast('Vui lòng nhập email người nhận!','error'); return; }
+
+  showLoading('Đang gửi email...');
+  try {
+    const res = await apiPost({ action:'sendEmail', storeId, month, year, email:toEmail, storeName });
+    if (res.error) throw new Error(res.error);
+    showToast('✓ '+res.message,'success');
+    document.getElementById('email-to').value = '';
+  } catch(e) {
+    showToast('Lỗi gửi email: '+e.message,'error');
+  } finally {
+    hideLoading();
+  }
+}
+
+// ============================================================
+// UI HELPERS
+// ============================================================
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  document.querySelectorAll('.nav-tab').forEach((t,i)=>{
+    t.classList.toggle('active',['dashboard','stores','pl','input','email'][i]===id);
+  });
+  document.querySelectorAll('.mobile-nav-btn').forEach((b,i)=>{
+    b.classList.toggle('active',['dashboard','stores','pl','input','email'][i]===id);
+  });
+  window.scrollTo(0,0);
+}
+
+function showLoading(txt) {
+  document.getElementById('loading').classList.add('show');
+  document.getElementById('loading-text').textContent = txt||'Đang tải...';
+}
+function hideLoading() { document.getElementById('loading').classList.remove('show'); }
+
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast '+type+' show';
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+function fmtVND(n) {
+  if (!n && n!==0) return '—';
+  return Math.round(Math.abs(n)).toLocaleString('vi-VN')+' ₫';
+}
+function fmtM(n) {
+  if (!n && n!==0) return '0';
+  const abs = Math.abs(n);
+  const sign = n<0?'-':'';
+  if (abs>=1e9) return sign+(abs/1e9).toFixed(1)+' tỷ';
+  if (abs>=1e6) return sign+Math.round(abs/1e6)+' tr';
+  return sign+Math.round(abs/1e3)+' nghìn';
+}
+</script>
+</body>
+</html>
