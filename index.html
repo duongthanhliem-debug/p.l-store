@@ -1919,7 +1919,7 @@ async function analyzeXlsx(){
     const totalSheets = wb.SheetNames.length;
     for(let si=0; si<totalSheets; si++){
       const sheetName = wb.SheetNames[si];
-      document.getElementById('xlsx-thinking-txt').textContent=`AI dang phan tich sheet ${si+1}/${totalSheets}: ${sheetName}...`;
+      document.getElementById('xlsx-thinking-txt').textContent=`AI đang phân tích sheet ${si+1}/${totalSheets}: ${sheetName}...`;
       await new Promise(r=>setTimeout(r,30));
       const ws = wb.Sheets[sheetName];
       const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:true});
