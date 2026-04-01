@@ -1901,104 +1901,79 @@ function processXlsxFile(file){
 }
 
 async function analyzeXlsx(){
-  if(!xlsxFile){toast('Chọn file Excel trước','terr');return;}
-
+  if(!xlsxFile){toast('Chon file Excel truoc','terr');return;}
+  const apiKey = window._aiKey || C.apiKey || '';
+  if(!apiKey && !C.apiUrl){
+    toast('Can API Key Anthropic hoac Apps Script URL. Vao Cai dat.','terr');
+    openSetup(); return;
+  }
   document.getElementById('btn-xlsx-analyze').style.display='none';
   document.getElementById('xlsx-thinking').style.display='flex';
-  document.getElementById('xlsx-thinking-txt').textContent='Đang đọc file...';
+  document.getElementById('xlsx-thinking-txt').textContent='Dang doc file Excel...';
   document.getElementById('xlsx-results').innerHTML='';
   document.getElementById('xlsx-confirm-bar').style.display='none';
-
   try{
     const buf = await xlsxFile.arrayBuffer();
-    const wb = XLSX.read(buf, {type:'array', cellDates:true});
-    
+    const wb = XLSX.read(buf, {type:'array', cellDates:false});
     const parsed = [];
     const totalSheets = wb.SheetNames.length;
     for(let si=0; si<totalSheets; si++){
       const sheetName = wb.SheetNames[si];
-      document.getElementById('xlsx-thinking-txt').textContent=`Đang đọc sheet ${si+1}/${totalSheets}: ${sheetName}...`;
-      await new Promise(r=>setTimeout(r,20));
+      document.getElementById('xlsx-thinking-txt').textContent=`AI dang phan tich sheet ${si+1}/${totalSheets}: ${sheetName}...`;
+      await new Promise(r=>setTimeout(r,30));
       const ws = wb.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
+      const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:'', raw:true});
       if(!rows.length) continue;
-      
-      // Find header row (look for row with "Gross" or revenue keywords)
-      let headerIdx = -1;
-      for(let i=0;i<Math.min(rows.length,10);i++){
-        const row = rows[i].map(x=>String(x||'').toLowerCase());
-        if(row.some(x=>x.includes('gross')||x.includes('doanh thu')||x.includes('revenue')||x.includes('tổng'))){
-          headerIdx = i; break;
+      const maxRows = Math.min(rows.length, 200);
+      const usedRows = rows.slice(0, maxRows);
+      let maxCols = 0;
+      usedRows.forEach(r=>{if(r.length>maxCols) maxCols=r.length;});
+      maxCols = Math.min(maxCols, 20);
+      const csvText = usedRows.map(row=>
+        Array.from({length:maxCols},(_,ci)=>String(row[ci]??'').replace(/\n/g,' ')).join('\t')
+      ).join('\n');
+      const prompt = `Ban la chuyen gia phan tich du lieu ban hang iPos/Fabi. Day la du lieu raw tu sheet "${sheetName}" (tab-separated, moi sheet = 1 cua hang):\n\`\`\`\n${csvText}\n\`\`\`\n\nNhiem vu - Trich xuat du lieu theo quy tac:\n1. DOANH THU (Thu): Tong Gross tung nguon don hang (GrabFood, ShopeeFood, Mang ve, Tai cho...) theo tung THANG. Lay so Gross truoc chiet khau. Giu nguyen ten nguon.\n2. CHIET KHAU (Chi): Tong chiet khau tung nguon theo thang. GrabFood/ShopeeFood/food app -> "Chiet khau food app". Nguon khac -> "Chiet khau CTKM".\n3. Bo qua cac cot khac.\n\nTra ve JSON array THUAN TUY (KHONG markdown), vi du:\n[{"month":"2026-01","sources":[{"name":"GrabFood","gross":12500000,"discount":1250000},{"name":"Mang ve","gross":8000000,"discount":0}]}]\n\nNeu khong co du lieu hop le, tra ve [].`;
+      try{
+        const raw = await callClaudeText(prompt);
+        let txt = raw.trim().replace(/```json\n?/g,'').replace(/```\n?/g,'').trim();
+        const m = txt.match(/\[[\s\S]*\]/);
+        if(m) txt = m[0];
+        const arr = JSON.parse(txt);
+        if(!Array.isArray(arr)||!arr.length){
+          parsed.push({sheetName, error:'AI khong tim thay du lieu doanh thu trong sheet nay.', monthGroups:{}, discountGroups:{}, rows:0});
+          continue;
         }
+        const monthGroups={}, discountGroups={};
+        arr.forEach(({month, sources})=>{
+          const mk = String(month||'unknown');
+          if(!monthGroups[mk]) monthGroups[mk]={};
+          if(!discountGroups[mk]) discountGroups[mk]={};
+          (sources||[]).forEach(({name, gross, discount})=>{
+            const src=String(name||'').trim()||'Doanh thu';
+            monthGroups[mk][src]=(monthGroups[mk][src]||0)+(Number(gross)||0);
+            const disc=Math.abs(Number(discount)||0);
+            if(disc>0){
+              if(!discountGroups[mk][src]) discountGroups[mk][src]={gross:0,discount:0};
+              discountGroups[mk][src].gross+=(Number(gross)||0);
+              discountGroups[mk][src].discount+=disc;
+            }
+          });
+        });
+        parsed.push({sheetName, monthGroups, discountGroups, rows:arr.length});
+      }catch(aiErr){
+        parsed.push({sheetName, error:'Loi AI: '+aiErr.message, monthGroups:{}, discountGroups:{}, rows:0});
       }
-      if(headerIdx<0) headerIdx = 0;
-      
-      const headers = rows[headerIdx].map(x=>String(x||'').trim());
-      const dataRows = rows.slice(headerIdx+1).filter(r=>r.some(x=>x!==''));
-      
-      // Parse date range from sheet data (look for date column)
-      const monthGroups = {}; // { 'YYYY-MM': { source: amount, ... } }
-      const discountGroups = {}; // { 'YYYY-MM': { source: { gross, discount } } }
-      
-      // Find key column indices
-      const findCol = (keywords) => {
-        for(const kw of keywords){
-          const idx = headers.findIndex(h=>h.toLowerCase().includes(kw.toLowerCase()));
-          if(idx>=0) return idx;
-        }
-        return -1;
-      };
-      
-      const dateCol = findCol(['ngày','date','thời gian','time','ngay']);
-      const sourceCol = findCol(['nguồn','source','kênh','channel','loại','type','nơi']);
-      const grossCol = findCol(['gross','doanh thu','revenue','tổng tiền','total']);
-      const discountCol = findCol(['chiết khấu','discount','ck','phí','commission','fee']);
-      
-      if(grossCol < 0){
-        // Try to use AI to identify columns if Claude is available
-        parsed.push({sheetName, error:'Không tìm thấy cột Doanh thu/Gross. Vui lòng kiểm tra file.', rows:[], monthGroups:{}, discountGroups:{}});
-        continue;
-      }
-      
-      dataRows.forEach(row=>{
-        const gross = parseFloat(String(row[grossCol]||'').replace(/[,\s₫đ]/g,''))||0;
-        if(!gross) return;
-        
-        const rawDate = dateCol>=0 ? row[dateCol] : null;
-        let dateObj = null;
-        if(rawDate instanceof Date) dateObj=rawDate;
-        else if(rawDate){
-          const parsed2 = new Date(rawDate);
-          if(!isNaN(parsed2)) dateObj=parsed2;
-        }
-        const monthKey = dateObj ? `${dateObj.getFullYear()}-${String(dateObj.getMonth()+1).padStart(2,'0')}` : 'unknown';
-        
-        const source = sourceCol>=0 ? String(row[sourceCol]||'').trim() : 'Doanh thu';
-        const discount = discountCol>=0 ? (parseFloat(String(row[discountCol]||'').replace(/[,\s₫đ]/g,''))||0) : 0;
-        
-        if(!monthGroups[monthKey]) monthGroups[monthKey]={};
-        if(!discountGroups[monthKey]) discountGroups[monthKey]={};
-        
-        monthGroups[monthKey][source] = (monthGroups[monthKey][source]||0) + gross;
-        if(discount>0){
-          if(!discountGroups[monthKey][source]) discountGroups[monthKey][source]={gross:0,discount:0};
-          discountGroups[monthKey][source].gross += gross;
-          discountGroups[monthKey][source].discount += discount;
-        }
-      });
-      
-      parsed.push({sheetName, headers, monthGroups, discountGroups, rows:dataRows.length});
     }
-    
     xlsxData = parsed;
     document.getElementById('xlsx-thinking').style.display='none';
     renderXlsxResults(parsed);
-    
   }catch(err){
     document.getElementById('xlsx-thinking').style.display='none';
     document.getElementById('btn-xlsx-analyze').style.display='flex';
-    toast('Lỗi đọc file: '+err.message, 'terr');
+    console.error(err);
+    toast('Loi doc file: '+err.message,'terr');
   }
+}
 }
 
 function renderXlsxResults(parsed){
