@@ -1865,6 +1865,7 @@ Viết 2-3 đoạn văn THỰC TẾ, THÂN THIỆN dành cho chủ shop (không 
 // ===== EXCEL REVENUE IMPORT (iPos/Fabi format) =====
 let xlsxData = null;
 let xlsxPendingTx = [];
+let xlsxFile = null; // stored file reference (input gets cleared after selection)
 
 const FOOD_APP_SOURCES = ['grab','grabfood','shopee','shopeefood','baemin','gofood','goviet','loship','ahamove','momo','zalopay','vnpay','food app','foodapp','delivery','app','now'];
 
@@ -1877,13 +1878,13 @@ function handleXlsxDrop(e){
   e.preventDefault();
   document.getElementById('xlsx-drop').classList.remove('over');
   const f = Array.from(e.dataTransfer.files).find(f=>f.name.match(/\.(xlsx|xls|csv)$/i));
-  if(f) processXlsxFile(f);
+  if(f){ xlsxFile=f; processXlsxFile(f); }
 }
 
 function handleXlsxSelect(e){
   const f = e.target.files[0];
-  if(f) processXlsxFile(f);
-  e.target.value='';
+  if(f){ xlsxFile=f; processXlsxFile(f); }
+  // NOTE: do NOT clear e.target.value here — we need the file reference to persist
 }
 
 function processXlsxFile(file){
@@ -1900,28 +1901,24 @@ function processXlsxFile(file){
 }
 
 async function analyzeXlsx(){
-  const file = document.getElementById('xlsx-file-input').files[0] || (() => {
-    // user may have cleared input but already saw info - get from drop
-    return null;
-  })();
-  
-  // Re-read file from input
-  const inp = document.getElementById('xlsx-file-input');
-  if(!inp.files.length && !xlsxData){toast('Chọn file Excel trước','terr');return;}
+  if(!xlsxFile){toast('Chọn file Excel trước','terr');return;}
 
   document.getElementById('btn-xlsx-analyze').style.display='none';
   document.getElementById('xlsx-thinking').style.display='flex';
+  document.getElementById('xlsx-thinking-txt').textContent='Đang đọc file...';
   document.getElementById('xlsx-results').innerHTML='';
   document.getElementById('xlsx-confirm-bar').style.display='none';
 
   try{
-    const f = inp.files[0];
-    const buf = await f.arrayBuffer();
+    const buf = await xlsxFile.arrayBuffer();
     const wb = XLSX.read(buf, {type:'array', cellDates:true});
     
-    // Parse each sheet = 1 store
     const parsed = [];
-    for(const sheetName of wb.SheetNames){
+    const totalSheets = wb.SheetNames.length;
+    for(let si=0; si<totalSheets; si++){
+      const sheetName = wb.SheetNames[si];
+      document.getElementById('xlsx-thinking-txt').textContent=`Đang đọc sheet ${si+1}/${totalSheets}: ${sheetName}...`;
+      await new Promise(r=>setTimeout(r,20));
       const ws = wb.Sheets[sheetName];
       const rows = XLSX.utils.sheet_to_json(ws, {header:1, defval:''});
       if(!rows.length) continue;
@@ -2168,7 +2165,7 @@ async function saveXlsxAll(){
 }
 
 function clearXlsx(){
-  xlsxData = null; xlsxPendingTx = [];
+  xlsxData = null; xlsxPendingTx = []; xlsxFile = null;
   document.getElementById('xlsx-results').innerHTML='';
   document.getElementById('xlsx-confirm-bar').style.display='none';
   document.getElementById('btn-xlsx-analyze').style.display='none';
